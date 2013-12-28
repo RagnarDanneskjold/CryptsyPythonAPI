@@ -4,13 +4,34 @@ import json
 import time
 import hmac,hashlib
 
+from filecache import filecache
+_CACHE_TIME = 60*60*24
+
 def createTimeStamp(datestr, format="%Y-%m-%d %H:%M:%S"):
     return time.mktime(time.strptime(datestr, format))
+
+class _CacheTimeout():    
+    def __int__(self):
+        self._timeout = 0
+
+    def __float_(self):
+        return self._timeout
+
+    def __int__(self):
+        return self._timeout
+
+    def setTimeout(self, t):
+        self._timeout = t
+
+CacheTimeout = _CacheTimeout()
+CacheTimeout.setTimeout(_CACHE_TIME)
 
 class Cryptsy:
     def __init__(self, APIKey, Secret):
         self.APIKey = APIKey
         self.Secret = Secret
+    def __repr__(self):
+        return self.APIKey[:4]+self.Secret[:4]
 
     def post_process(self, before):
         after = before
@@ -48,15 +69,19 @@ class Cryptsy:
             jsonRet = json.loads(ret.read())
             return self.post_process(jsonRet)
 
+    @filecache(CacheTimeout)
     def getMarketData(self):
         return self.api_query("marketdata")
-
+      
+    @filecache(CacheTimeout)
     def getMarketDataV2(self):
         return self.api_query("marketdatav2")
 
+    @filecache(CacheTimeout)
     def getSingleMarketData(self, marketid):
         return self.api_query("singlemarketdata", {'marketid': marketid})
 
+    @filecache(CacheTimeout)
     def getOrderbookData(self, marketid=None):
         if(marketid == None):
             return self.api_query("orderdata")
@@ -108,6 +133,7 @@ class Cryptsy:
     # tradeprice  The price the trade occurred at
     # quantity    Quantity traded
     # total   Total value of trade (tradeprice * quantity)
+    @filecache(CacheTimeout)
     def marketTrades(self, marketid):
         return self.api_query('markettrades', {'marketid': marketid})
 
@@ -120,6 +146,7 @@ class Cryptsy:
     # buyprice    If a buy order, price the order is buying at
     # quantity    Quantity on order
     # total   Total value of order (price * quantity)
+    @filecache(CacheTimeout)
     def marketOrders(self, marketid):
         return self.api_query('marketorders', {'marketid': marketid})
 
@@ -147,6 +174,7 @@ class Cryptsy:
     # tradeprice  The price the trade occurred at
     # quantity    Quantity traded
     # total   Total value of trade (tradeprice * quantity)
+    @filecache(CacheTimeout)
     def allMyTrades(self):
         return self.api_query('allmytrades')
 
@@ -182,6 +210,7 @@ class Cryptsy:
     #     ....
     #   )
     # )
+    @filecache(CacheTimeout)
     def depth(self, marketid):
         return self.api_query('depth', {'marketid': marketid})
 
@@ -213,7 +242,7 @@ class Cryptsy:
     # Inputs:
     # orderid Order ID for which you would like to cancel
     ##
-    # Outputs: If successful, it will return a success code. 
+    # Outputs: If successful, it will return a success code.
     def cancelOrder(self, orderid):
         return self.api_query('cancelorder', {'orderid': orderid})
 
